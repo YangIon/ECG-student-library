@@ -1,0 +1,2 @@
+# ECG Student Library Application
+Python application created by **YangIon** to help high school students check out and return books through a website. Inspired by an old high school project created in Java and SQLite. 
