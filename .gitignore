@@ -3,3 +3,5 @@ config.py
 .flaskenv
 __pycache__
 .vscode/
+app.db
+migrations/
