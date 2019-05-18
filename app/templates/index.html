@@ -2,4 +2,11 @@
 
 {% block content %}
     <h1>Hi, {{current_user.username}}</h1>
+    {% if books %}
+    <ul>
+        {% for book in books %}
+        <li>{{ book.title }}, Number: {{ book.number_books }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
 {% endblock %}
