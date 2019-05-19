@@ -1,7 +1,7 @@
 from flask import render_template, flash, redirect, url_for, request
 from werkzeug.urls import url_parse
 from app import app
-from app.forms import LoginForm
+from app.forms import LoginForm, CheckoutForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Book
 
@@ -11,6 +11,11 @@ from app.models import User, Book
 def index():
     books = Book.query.all()
     return render_template('index.html', title='Home', books = books)
+
+@app.route('/checkout')
+def checkout():
+    form = CheckoutForm()
+    return render_template('admin.html', title='Check Out', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <h1>Checkout</h1>
+    <form action="" method="post" novalidate>
+        {{ form.hidden_tag() }}
+        <p>
+            {{ form.checkout.label }}<br>
+            {{ form.checkout(size=3) }}
+        </p>
+    </form>
+{% endblock %}

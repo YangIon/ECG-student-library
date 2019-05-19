@@ -22,18 +22,16 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
-checkouts = db.Table('checkouts',
-    db.Column('student_id', db.Integer, db.ForeignKey('student.id')),
-    db.Column('book_id', db.Integer, db.ForeignKey('book.id')),
-    db.Column('transaction_date', db.DateTime, index=True, default=datetime.utcnow)
-)
-
 class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     g_number = db.Column(db.Integer)
-    books = db.relationship('Book', secondary=checkouts, backref=db.backref('checkouts', lazy='dynamic'))
+
+    def __init__(self, name=None, email=None, g_number=None):
+        self.name = name
+        self.email = email
+        self.g_number = g_number
 
     def __repr__(self):
         return '<Student {}>'.format(self.name)
@@ -43,7 +41,28 @@ class Book(db.Model):
     title = db.Column(db.String(140))
     author = db.Column(db.String(140))
     number_books = db.Column(db.Integer)
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+
+    def __init__(self, title=None, author=None, number_books=None):
+        self.title = title
+        self.author = author
+        self.number_books = number_books 
 
     def __repr__(self):
         return '<Book {}>'.format(self.title)
+
+class Checkout(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id'))
+    book_id = db.Column(db.Integer, db.ForeignKey('book.id'))
+    student = db.relationship('Student', foreign_keys=[student_id])
+    book = db.relationship('Book', foreign_keys=[book_id])
+    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    isReturn = db.Column(db.Boolean, unique=False)
+
+    def __init__(self, student=None, book=None, isReturn=None):
+        self.student = student
+        self.book = book
+        self.isReturn = isReturn
+
+    def __repr__(self):
+        return '<Checkout of {} by {}>'.format(self.book.title, self.student.name)
