@@ -4,6 +4,7 @@ from app import app, db
 from app.forms import LoginForm, CheckoutForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Book, Student, Checkout
+from sqlalchemy import exc
 import sys
 
 @app.route('/', methods=['GET', 'POST'])
@@ -22,29 +23,30 @@ def index():
         print("Return " + str(form.return_field.data), file=sys.stderr)
 
     def create_checkout(form_book=None, form_student=None, is_return=False):
-        book = Book.query.filter_by(id=form_book).first()
-        student = Student.query.filter_by(id=form_student).first()
-        new_checkout = Checkout(student, book, is_return)
-        db.session.add(new_checkout)
-        db.session.commit()
+        try:
+            book = Book.query.filter_by(id=form_book).first()
+            student = Student.query.filter_by(id=form_student).first()
+            new_checkout = Checkout(student, book, is_return)
+            db.session.add(new_checkout)
+            db.session.commit()
+        except exc.SQLAlchemyError:
+            db.session.rollback()
+            return render_template('500.html'), 500
 
     if form.validate_on_submit():
-        print('WORK MAH GAWD', file=sys.stderr)
         if form.checkout_field.data:
-           # create_checkout(form.book_select.data, form.student_select.data, True)
+            create_checkout(form.book_select.data, form.student_select.data, True)
             flash('Book successfully checked out!')
             return redirect(url_for('index'))
         else:
-            #create_checkout(form.book_select.data, form.student_select.data, False)
+            create_checkout(form.book_select.data, form.student_select.data, False)
             flash('Book successfully returned!')
             return redirect(url_for('index'))
-    print(form.validate_on_submit(), file=sys.stderr)
-    print(form.errors, file=sys.stderr)
     return render_template('index.html', title='Home', books=books, form=form)
 
 @app.route('/checkout')
 def checkout():
-    return render_template('admin.html', title='Check Out', form=form)
+    return render_template('admin.html', title='Check Out')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

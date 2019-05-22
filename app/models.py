@@ -26,7 +26,7 @@ class Student(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
-    g_number = db.Column(db.Integer)
+    g_number = db.Column(db.Integer, unique=True)
 
     def __init__(self, name=None, email=None, g_number=None):
         self.name = name
@@ -38,7 +38,7 @@ class Student(db.Model):
 
 class Book(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(140))
+    title = db.Column(db.String(140), unique=True)
     author = db.Column(db.String(140))
     number_books = db.Column(db.Integer)
 
@@ -52,17 +52,20 @@ class Book(db.Model):
 
 class Checkout(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('student.id'))
-    book_id = db.Column(db.Integer, db.ForeignKey('book.id'))
+    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
+    book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=False)
     student = db.relationship('Student', foreign_keys=[student_id])
     book = db.relationship('Book', foreign_keys=[book_id])
     timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
-    isReturn = db.Column(db.Boolean, unique=False)
+    is_return = db.Column(db.Boolean, unique=False)
 
-    def __init__(self, student=None, book=None, isReturn=None):
+    def __init__(self, student=None, book=None, is_return=None):
         self.student = student
         self.book = book
-        self.isReturn = isReturn
+        self.is_return = is_return
 
     def __repr__(self):
-        return '<Checkout of {} by {}>'.format(self.book.title, self.student.name)
+        if self.is_return:
+            return '<Checkout of {} by {}>'.format(self.book.title, self.student.name)
+        else:
+            return '<Return of {} by {}>'.format(self.book.title, self.student.name)
