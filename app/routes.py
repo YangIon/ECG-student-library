@@ -1,20 +1,49 @@
 from flask import render_template, flash, redirect, url_for, request
 from werkzeug.urls import url_parse
-from app import app
+from app import app, db
 from app.forms import LoginForm, CheckoutForm
 from flask_login import current_user, login_user, logout_user, login_required
-from app.models import User, Book
+from app.models import User, Book, Student, Checkout
+import sys
 
-@app.route('/')
-@app.route('/index')
-#@login_required
+@app.route('/', methods=['GET', 'POST'])
 def index():
     books = Book.query.all()
-    return render_template('index.html', title='Home', books = books)
+    students = Student.query.all()
+    book_options = [(book.id, book.title) for book in books]
+    student_options = [(student.id, student.name) for student in students]
+    form = CheckoutForm()
+    form.book_select.choices = book_options
+    form.student_select.choices = student_options
+
+    if form.checkout_field.data:
+        print("Checkout " + str(form.checkout_field.data), file=sys.stderr)
+    elif form.return_field.data:
+        print("Return " + str(form.return_field.data), file=sys.stderr)
+
+    def create_checkout(form_book=None, form_student=None, is_return=False):
+        book = Book.query.filter_by(id=form_book).first()
+        student = Student.query.filter_by(id=form_student).first()
+        new_checkout = Checkout(student, book, is_return)
+        db.session.add(new_checkout)
+        db.session.commit()
+
+    if form.validate_on_submit():
+        print('WORK MAH GAWD', file=sys.stderr)
+        if form.checkout_field.data:
+           # create_checkout(form.book_select.data, form.student_select.data, True)
+            flash('Book successfully checked out!')
+            return redirect(url_for('index'))
+        else:
+            #create_checkout(form.book_select.data, form.student_select.data, False)
+            flash('Book successfully returned!')
+            return redirect(url_for('index'))
+    print(form.validate_on_submit(), file=sys.stderr)
+    print(form.errors, file=sys.stderr)
+    return render_template('index.html', title='Home', books=books, form=form)
 
 @app.route('/checkout')
 def checkout():
-    form = CheckoutForm()
     return render_template('admin.html', title='Check Out', form=form)
 
 @app.route('/login', methods=['GET', 'POST'])
@@ -38,3 +67,4 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+

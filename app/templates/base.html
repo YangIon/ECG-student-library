@@ -7,7 +7,7 @@
         {% endif %}
     </head>
     <body>
-        <div>
+        <nav>
             Student Library Database: 
             <a href="{{ url_for('index') }}">Home</a>
             {% if current_user.is_anonymous %}
@@ -15,7 +15,7 @@
             {% else %}
             <a href="{{ url_for('logout') }}">Logout</a>
             {% endif %}
-        </div>
+        </nav>
         <hr>
         {% with messages = get_flashed_messages() %}
         {% if messages %}

@@ -10,5 +10,10 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
 
 class CheckoutForm(FlaskForm):
-   # options = Book.query.all().count()
-    checkout = SelectField(u'Book Selection', choices=[('cpp', 'C++'), ('py', 'Python'), ('text', 'Plain Text')], validators=[Required()])
+    book_select = SelectField(u'Book Selection', coerce=int, validators=[DataRequired()])
+    student_select = SelectField(u'Student', coerce=int, validators=[DataRequired()])
+    checkout_field = SubmitField('Checkout')
+    return_field = SubmitField('Return')
+    
+    
+    
