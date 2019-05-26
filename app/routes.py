@@ -11,21 +11,31 @@ import sys
 def index():
     books = Book.query.all()
     students = Student.query.all()
-    book_options = [(book.id, book.title) for book in books]
-    student_options = [(student.id, student.name) for student in students]
     form = CheckoutForm()
-    form.book_select.choices = book_options
-    form.student_select.choices = student_options
+    form.book_select.choices = [(book.id, book.title) for book in books]
+    form.student_select.choices = [(student.id, student.name) for student in students]
 
-    if form.checkout_field.data:
-        print("Checkout " + str(form.checkout_field.data), file=sys.stderr)
-    elif form.return_field.data:
-        print("Return " + str(form.return_field.data), file=sys.stderr)
-
-    def create_checkout(form_book=None, form_student=None, is_return=False):
+    def checkout(form_book=None, form_student=None, is_return=False):
         try:
             book = Book.query.filter_by(id=form_book).first()
             student = Student.query.filter_by(id=form_student).first()
+
+            if not is_return and student.is_owning(book):
+                flash('{} has already checked out a copy of {}.'.format(student.name, book.title))
+                return redirect(url_for('index'))
+            
+            if is_return and student.is_owning(book):
+                book.number_books = book.number_books + 1
+                student.returnBook(book)
+                flash('Book successfully returned!')
+            elif is_return and not student.is_owning(book):
+                flash('{} does not currently own a copy of {}'.format(student.name, book.title))
+                return redirect(url_for('index'))
+            else:
+                book.number_books = book.number_books - 1
+                student.checkoutBook(book)
+                flash('Book successfully checked out!')
+
             new_checkout = Checkout(student, book, is_return)
             db.session.add(new_checkout)
             db.session.commit()
@@ -35,18 +45,18 @@ def index():
 
     if form.validate_on_submit():
         if form.checkout_field.data:
-            create_checkout(form.book_select.data, form.student_select.data, True)
-            flash('Book successfully checked out!')
+            checkout(form.book_select.data, form.student_select.data, False)
             return redirect(url_for('index'))
         else:
-            create_checkout(form.book_select.data, form.student_select.data, False)
-            flash('Book successfully returned!')
+            checkout(form.book_select.data, form.student_select.data, True)
             return redirect(url_for('index'))
+
     return render_template('index.html', title='Home', books=books, form=form)
 
-@app.route('/checkout')
-def checkout():
-    return render_template('admin.html', title='Check Out')
+@app.route('/admin')
+@login_required
+def admin():
+    return render_template('admin.html', title='Admin Page')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():

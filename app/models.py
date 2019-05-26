@@ -22,11 +22,18 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return '<User {}>'.format(self.username)
 
+checkouts = db.Table('checkouts',
+    db.Column('student_id', db.Integer, db.ForeignKey('students.id')),
+    db.Column('book_id', db.Integer, db.ForeignKey('books.id'))
+)
+
 class Student(db.Model):
+    __tablename__ = 'students'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(64), index=True, unique=True)
     email = db.Column(db.String(120), index=True, unique=True)
     g_number = db.Column(db.Integer, unique=True)
+    books = db.relationship('Book', secondary=checkouts, backref=db.backref('student', lazy='dynamic'), lazy='dynamic')
 
     def __init__(self, name=None, email=None, g_number=None):
         self.name = name
@@ -36,11 +43,25 @@ class Student(db.Model):
     def __repr__(self):
         return '<Student {}>'.format(self.name)
 
+    def checkoutBook(self, book):
+        if not self.is_owning(book):
+            self.books.append(book)
+    
+    def returnBook(self, book):
+        if self.is_owning(book):
+            self.books.remove(book)
+    
+    def is_owning(self, book):
+        return self.books.filter(
+            checkouts.c.book_id == book.id).count() > 0
+
 class Book(db.Model):
+    __tablename__ = 'books'
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(140), unique=True)
     author = db.Column(db.String(140))
     number_books = db.Column(db.Integer)
+    students = db.relationship('Student', secondary=checkouts, backref=db.backref('book', lazy='dynamic'), lazy='dynamic')
 
     def __init__(self, title=None, author=None, number_books=None):
         self.title = title
@@ -52,11 +73,11 @@ class Book(db.Model):
 
 class Checkout(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('student.id'), nullable=False)
-    book_id = db.Column(db.Integer, db.ForeignKey('book.id'), nullable=False)
-    student = db.relationship('Student', foreign_keys=[student_id])
-    book = db.relationship('Book', foreign_keys=[book_id])
-    timestamp = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
+    book_id = db.Column(db.Integer, db.ForeignKey('books.id'))
+    student = db.relationship('Student', backref=db.backref("checkouts"))
+    book = db.relationship('Book', backref=db.backref("checkouts"))
+    dttm = db.Column(db.DateTime, index=True, default=datetime.utcnow)
     is_return = db.Column(db.Boolean, unique=False)
 
     def __init__(self, student=None, book=None, is_return=None):
@@ -66,6 +87,6 @@ class Checkout(db.Model):
 
     def __repr__(self):
         if self.is_return:
-            return '<Checkout of {} by {}>'.format(self.book.title, self.student.name)
-        else:
             return '<Return of {} by {}>'.format(self.book.title, self.student.name)
+        else:
+            return '<Checkout of {} by {}>'.format(self.book.title, self.student.name)

@@ -7,10 +7,16 @@
         <p>
             {{ form.book_select.label }}<br>
             {{ form.book_select(size=3) }}
+            {% for error in form.book_select.errors %} 
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
         </p>
         <p>
             {{ form.student_select.label }}<br>
             {{ form.student_select(size=4) }}
+            {% for error in form.student_select.errors %} 
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
         </p>
         <p>
             {{ form.checkout_field }}
