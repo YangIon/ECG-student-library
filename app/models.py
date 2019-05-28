@@ -58,7 +58,7 @@ class Student(db.Model):
 class Book(db.Model):
     __tablename__ = 'books'
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(140), unique=True)
+    title = db.Column(db.String(140))
     author = db.Column(db.String(140))
     number_books = db.Column(db.Integer)
     students = db.relationship('Student', secondary=checkouts, backref=db.backref('book', lazy='dynamic'), lazy='dynamic')

@@ -13,7 +13,7 @@
         </p>
         <p>
             {{ form.student_select.label }}<br>
-            {{ form.student_select(size=4) }}
+            {{ form.student_select(size=3) }}
             {% for error in form.student_select.errors %} 
             <span style="color: red;">[{{ error }}]</span>
             {% endfor %}

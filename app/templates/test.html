@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Testing Dropdown Filtering</h1>
+<form method="post" novalidate>
+    {{ form.book_select }}
+    {{ form.author_select }}
+</form>
+<script>
+    let book_select = document.getElementById('book_select');
+    let author_select = document.getElementById('author_select');
+
+    book_select.onchange = function() {
+        book = book_select.options[book_select.selectedIndex].text
+        
+        fetch('/author/' + book).then(function(response) {
+            response.json().then(function(data) {
+                let optionHTML = '';
+
+                for (let author of data.authors) {
+                    optionHTML += '<option value="' + author.id + '">' + author.author + '</option>';
+                }
+
+                author_select.innerHTML = optionHTML;
+            }) 
+        });
+    }
+</script>
+{% endblock %}

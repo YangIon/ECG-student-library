@@ -1,12 +1,59 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <h1>Checkout</h1>
+    <h1>Administrator Page</h1>
+    {% if books %}
+    <ul>
+        {% for b in books %}
+        <li>{{ b.title }}, {{ b.number_books }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
     <form action="" method="post" novalidate>
-        {{ form.hidden_tag() }}
+        {{ form_one.hidden_tag() }}
         <p>
-            {{ form.checkout.label }}<br>
-            {{ form.checkout(size=3) }}
+            {{ form_one.book_title.label }}<br>
+            {{ form_one.book_title(size=32) }}
+            {% for error in form_one.book_title.errors %} 
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form_one.author.label }}<br>
+            {{ form_one.author(size=32) }}
+            {% for error in form_one.author.errors %} 
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form_one.copies.label }}<br>
+            {{ form_one.copies(size=32) }}
+            {% for error in form_one.copies.errors %} 
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form_one.create_book }}
+        </p>
+    </form>
+    <form action="" method="post" novalidate>
+        {{ form_two.hidden_tag() }}
+        <p>
+            {{ form_two.book_select.label }}<br>
+            {{ form_two.book_select }}
+            {% for errors in form_two.book_select.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form_two.author_select.label }}<br>
+            {{ form_two.author_select }}
+            {% for errors in form_two.author_select.errors %}
+            <span style="color: red;">[{{ error }}]</span>
+            {% endfor %}
+        </p>
+        <p>
+            {{ form_two.delete_book }}
         </p>
     </form>
 {% endblock %}

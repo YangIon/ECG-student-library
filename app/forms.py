@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, BooleanField, SubmitField, SelectField, IntegerField
-from wtforms.validators import DataRequired, Required
+from wtforms.validators import DataRequired, Required, ValidationError
 from app.models import Book
 
 class LoginForm(FlaskForm):
@@ -15,14 +15,26 @@ class CheckoutForm(FlaskForm):
     checkout_field = SubmitField('Checkout')
     return_field = SubmitField('Return')
 
-class AdminForm(FlaskForm):
+class CreateForm(FlaskForm):
     book_title = StringField('Input a book title: ', validators=[DataRequired()])
     author = StringField('Input an author name: ', validators=[DataRequired()])
-    copies = IntegerField('Input the number of copies: ', validators=[DataRequired()])
+    copies = IntegerField('Input the number of copies: ') 
     create_book = SubmitField('Create A Book')
 
-    book_select = SelectField(u'Select the book', coerce=int, validators=[DataRequired()])
-    delete_book = SubmitField('Delete A Book')
+def validate_delete(form, field):
+    if field.data == "":
+        raise ValidationError("Testing")
+
+class DeleteForm(FlaskForm):
+    author_select = SelectField(u'Select Author', default='', coerce=int, validators=[validate_delete])
+    book_select = SelectField(u'Select Book', default='', coerce=int, validators=[validate_delete])
+    delete_book = SubmitField('Delete the Book')
+
+class TestForm(FlaskForm):
+    author_select = SelectField(u'Select Author', coerce=int)
+    book_select = SelectField(u'Select Book', coerce=int)
+    
+
     
     
     

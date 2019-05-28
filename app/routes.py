@@ -1,7 +1,7 @@
-from flask import render_template, flash, redirect, url_for, request
+from flask import render_template, flash, redirect, url_for, request, jsonify
 from werkzeug.urls import url_parse
 from app import app, db
-from app.forms import LoginForm, CheckoutForm
+from app.forms import LoginForm, CheckoutForm, CreateForm, DeleteForm, TestForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Book, Student, Checkout
 from sqlalchemy import exc
@@ -53,15 +53,32 @@ def index():
 
     return render_template('index.html', title='Home', books=books, form=form)
 
-@app.route('/admin')
+@app.route('/admin', methods=['GET', 'POST'])
 @login_required
 def admin():
-    return render_template('admin.html', title='Admin Page')
+    books = Book.query.all()
+    create_form = CreateForm()
+    delete_form = DeleteForm()
+    delete_form.book_select.choices = [(book.id, book.title) for book in books]
+    delete_form.author_select.choices = [(book.id, book.author) for book in books]
+    
+    if create_form.create_book.data:
+        if create_form.validate_on_submit():
+            new_book = Book(create_form.book_title.data, create_form.author.data, create_form.copies.data)
+            db.session.add(new_book)
+            db.session.commit()
+            return redirect(url_for('admin'))
+    elif delete_form.delete_book.data:
+        print(delete_form.errors, file=sys.stderr)
+        if delete_form.validate_on_submit():
+            print("Delete Works Separately", file=sys.stderr)
+
+    return render_template('admin.html', title='Admin Page', books=books, form_one=create_form, form_two=delete_form)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for('index'))
+        return redirect(url_for('admin'))
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
@@ -71,7 +88,7 @@ def login():
         login_user(user, remember=form.remember_me.data)
         next_page = request.args.get('next')
         if not next_page or url_parse(next_page).netloc != '':
-            next_page = url_for('index')
+            next_page = url_for('admin')
         return redirect(next_page)
     return render_template('login.html', title='Sign In', form=form)
 
@@ -79,4 +96,26 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for('index'))
+
+@app.route('/test')
+def test():
+    form = TestForm()
+    form.book_select.choices = [(book.id, book.title) for book in Book.query.all()]
+    form.author_select.choices = [(book.id, book.author) for book in Book.query.all()]
+    return render_template('test.html', form=form)
+
+@app.route('/author/<title>')
+def author(title):
+    books = Book.query.filter_by(title=title).all()
+
+    authorArray = []
+
+    for book in books:
+        authorObj = {}
+        authorObj['id'] = book.id
+        authorObj['author'] = book.author
+        authorArray.append(authorObj)
+    
+    return jsonify({'authors' : authorArray})
+
 
