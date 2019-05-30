@@ -63,15 +63,19 @@ def admin():
     delete_form.author_select.choices = [(book.id, book.author) for book in books]
     
     if create_form.create_book.data:
+        # Separate into new create() route
         if create_form.validate_on_submit():
             new_book = Book(create_form.book_title.data, create_form.author.data, create_form.copies.data)
             db.session.add(new_book)
             db.session.commit()
             return redirect(url_for('admin'))
     elif delete_form.delete_book.data:
-        print(delete_form.errors, file=sys.stderr)
+        # Separate into new delete() route
         if delete_form.validate_on_submit():
-            print("Delete Works Separately", file=sys.stderr)
+            deleted_book = Book.query.filter_by(id=delete_form.book_select.data).first()
+            db.session.delete(deleted_book)
+            db.session.commit()
+            return redirect(url_for('admin'))
 
     return render_template('admin.html', title='Admin Page', books=books, form_one=create_form, form_two=delete_form)
 

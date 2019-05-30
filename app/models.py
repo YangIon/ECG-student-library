@@ -61,7 +61,6 @@ class Book(db.Model):
     title = db.Column(db.String(140))
     author = db.Column(db.String(140))
     number_books = db.Column(db.Integer)
-    students = db.relationship('Student', secondary=checkouts, backref=db.backref('book', lazy='dynamic'), lazy='dynamic')
 
     def __init__(self, title=None, author=None, number_books=None):
         self.title = title
