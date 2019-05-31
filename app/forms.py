@@ -26,13 +26,10 @@ def validate_delete(form, field):
         raise ValidationError("Testing")
 
 class DeleteForm(FlaskForm):
-    author_select = SelectField(u'Select Author', default='', coerce=int, validators=[validate_delete])
     book_select = SelectField(u'Select Book', default='', coerce=int, validators=[validate_delete])
     delete_book = SubmitField('Delete the Book')
 
-class TestForm(FlaskForm):
-    author_select = SelectField(u'Select Author', coerce=int)
-    book_select = SelectField(u'Select Book', coerce=int)
+
     
 
     

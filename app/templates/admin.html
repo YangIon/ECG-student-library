@@ -9,7 +9,7 @@
         {% endfor %}
     </ul>
     {% endif %}
-    <form action="" method="post" novalidate>
+    <form action="" method="post" autocomplete="off" novalidate>
         {{ form_one.hidden_tag() }}
         <p>
             {{ form_one.book_title.label }}<br>
@@ -46,14 +46,10 @@
             {% endfor %}
         </p>
         <p>
-            {{ form_two.author_select.label }}<br>
-            {{ form_two.author_select }}
-            {% for errors in form_two.author_select.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
             {{ form_two.delete_book }}
         </p>
     </form>
+    <p>
+        {{ checkout_count }}
+    </p>
 {% endblock %}

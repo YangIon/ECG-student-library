@@ -27,6 +27,7 @@ checkouts = db.Table('checkouts',
     db.Column('book_id', db.Integer, db.ForeignKey('books.id'))
 )
 
+# TODO: Unique constraint for g_number, soft-delete design pattern
 class Student(db.Model):
     __tablename__ = 'students'
     id = db.Column(db.Integer, primary_key=True)
@@ -34,6 +35,7 @@ class Student(db.Model):
     email = db.Column(db.String(120), index=True, unique=True)
     g_number = db.Column(db.Integer, unique=True)
     books = db.relationship('Book', secondary=checkouts, backref=db.backref('student', lazy='dynamic'), lazy='dynamic')
+    deleted = db.Column(db.Boolean(), default=False)
 
     def __init__(self, name=None, email=None, g_number=None):
         self.name = name
@@ -61,6 +63,7 @@ class Book(db.Model):
     title = db.Column(db.String(140))
     author = db.Column(db.String(140))
     number_books = db.Column(db.Integer)
+    deleted = db.Column(db.Boolean(), default=False)
 
     def __init__(self, title=None, author=None, number_books=None):
         self.title = title

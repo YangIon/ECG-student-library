@@ -1,7 +1,7 @@
-from flask import render_template, flash, redirect, url_for, request, jsonify
+from flask import render_template, flash, redirect, url_for, request, jsonify, abort
 from werkzeug.urls import url_parse
 from app import app, db
-from app.forms import LoginForm, CheckoutForm, CreateForm, DeleteForm, TestForm
+from app.forms import LoginForm, CheckoutForm, CreateForm, DeleteForm
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Book, Student, Checkout
 from sqlalchemy import exc
@@ -9,12 +9,13 @@ import sys
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
-    books = Book.query.all()
-    students = Student.query.all()
+    books = Book.query.filter_by(deleted=False).all()
+    students = Student.query.filter_by(deleted=False).all()
     form = CheckoutForm()
     form.book_select.choices = [(book.id, book.title) for book in books]
     form.student_select.choices = [(student.id, student.name) for student in students]
 
+    # TODO: Handle error cases where books < 0 
     def checkout(form_book=None, form_student=None, is_return=False):
         try:
             book = Book.query.filter_by(id=form_book).first()
@@ -27,14 +28,14 @@ def index():
             if is_return and student.is_owning(book):
                 book.number_books = book.number_books + 1
                 student.returnBook(book)
-                flash('Book successfully returned!')
+                flash('{} successfully returned {}'.format(student.name, book.title))
             elif is_return and not student.is_owning(book):
                 flash('{} does not currently own a copy of {}'.format(student.name, book.title))
                 return redirect(url_for('index'))
             else:
                 book.number_books = book.number_books - 1
                 student.checkoutBook(book)
-                flash('Book successfully checked out!')
+                flash('{} successfully checked out {}'.format(student.name, book.title))
 
             new_checkout = Checkout(student, book, is_return)
             db.session.add(new_checkout)
@@ -53,15 +54,18 @@ def index():
 
     return render_template('index.html', title='Home', books=books, form=form)
 
+# TODO: Admin page displays statistics on how many books are checked out, last book checked out, last book returned. Overall database display
 @app.route('/admin', methods=['GET', 'POST'])
 @login_required
 def admin():
-    books = Book.query.all()
+    books = Book.query.filter_by(deleted=False).all()
+    checkout_count = Checkout.query.filter_by(is_return=False).count() - Checkout.query.filter_by(is_return=True).count()
+
     create_form = CreateForm()
     delete_form = DeleteForm()
     delete_form.book_select.choices = [(book.id, book.title) for book in books]
-    delete_form.author_select.choices = [(book.id, book.author) for book in books]
     
+    # TODO: Add a loop so that for every Quizlet-like entry provided in the view a new book is created.
     if create_form.create_book.data:
         # Separate into new create() route
         if create_form.validate_on_submit():
@@ -70,14 +74,10 @@ def admin():
             db.session.commit()
             return redirect(url_for('admin'))
     elif delete_form.delete_book.data:
-        # Separate into new delete() route
         if delete_form.validate_on_submit():
-            deleted_book = Book.query.filter_by(id=delete_form.book_select.data).first()
-            db.session.delete(deleted_book)
-            db.session.commit()
-            return redirect(url_for('admin'))
+            return redirect(url_for('delete_book', id=delete_form.book_select.data))
 
-    return render_template('admin.html', title='Admin Page', books=books, form_one=create_form, form_two=delete_form)
+    return render_template('admin.html', title='Admin Page', books=books, form_one=create_form, form_two=delete_form, checkout_count=checkout_count)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -101,25 +101,23 @@ def logout():
     logout_user()
     return redirect(url_for('index'))
 
-@app.route('/test')
-def test():
-    form = TestForm()
-    form.book_select.choices = [(book.id, book.title) for book in Book.query.all()]
-    form.author_select.choices = [(book.id, book.author) for book in Book.query.all()]
-    return render_template('test.html', form=form)
+@app.route('/students/<id>', methods=['DELETE'])
+def delete_student(id):
+    student = Student.query.get_or_404(id)
+    if student.deleted:
+        abort(404)
+    student.deleted = True
+    db.session.commit()
+    return '', 204
 
-@app.route('/author/<title>')
-def author(title):
-    books = Book.query.filter_by(title=title).all()
-
-    authorArray = []
-
-    for book in books:
-        authorObj = {}
-        authorObj['id'] = book.id
-        authorObj['author'] = book.author
-        authorArray.append(authorObj)
-    
-    return jsonify({'authors' : authorArray})
+@app.route('/books/<id>', methods=['GET', 'POST'])
+def delete_book(id):
+    book = Book.query.get_or_404(id)
+    if book.deleted:
+        abort(404)
+    book.deleted = True
+    db.session.commit()
+    flash('{} was successfully deleted from the library.'.format(book.title))
+    return redirect(url_for('admin'))
 
 
