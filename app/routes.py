@@ -12,7 +12,7 @@ def index():
     books = Book.query.filter_by(deleted=False).all()
     students = Student.query.filter_by(deleted=False).all()
     form = CheckoutForm()
-    form.book_select.choices = [(book.id, book.title) for book in books]
+    form.book_select.choices = [(book.id, book.title + " (" + str(book.number_books) + ")") for book in books]
     form.student_select.choices = [(student.id, student.name) for student in students]
 
     # TODO: Handle error cases where books < 0 
@@ -20,6 +20,12 @@ def index():
         try:
             book = Book.query.filter_by(id=form_book).first()
             student = Student.query.filter_by(id=form_student).first()
+
+            if not is_return and book.number_books <= 0:
+                flash('{} does not have any more copies available.'.format(book.title))
+                if book.lastCheckout():
+                    flash('The last student to have checked out this book was {}'.format(book.lastCheckout().getStudent().name))
+                return redirect(url_for('index'))
 
             if not is_return and student.is_owning(book):
                 flash('{} has already checked out a copy of {}.'.format(student.name, book.title))
@@ -36,7 +42,6 @@ def index():
                 book.number_books = book.number_books - 1
                 student.checkoutBook(book)
                 flash('{} successfully checked out {}'.format(student.name, book.title))
-
             new_checkout = Checkout(student, book, is_return)
             db.session.add(new_checkout)
             db.session.commit()
@@ -54,10 +59,15 @@ def index():
 
     return render_template('index.html', title='Home', books=books, form=form)
 
-# TODO: Admin page displays statistics on how many books are checked out, last book checked out, last book returned. Overall database display
-@app.route('/admin', methods=['GET', 'POST'])
+@app.route('/admin')
 @login_required
 def admin():
+    return render_template('admin.html', title='Admin Page')
+
+# TODO: Admin page displays statistics on how many books are checked out, last book checked out, last book returned. Overall database display, genres(?)
+@app.route('/admin/create', methods=['GET', 'POST'])
+@login_required
+def admin_create():
     books = Book.query.filter_by(deleted=False).all()
     checkout_count = Checkout.query.filter_by(is_return=False).count() - Checkout.query.filter_by(is_return=True).count()
 
@@ -72,13 +82,21 @@ def admin():
             new_book = Book(create_form.book_title.data, create_form.author.data, create_form.copies.data)
             db.session.add(new_book)
             db.session.commit()
-            return redirect(url_for('admin'))
+            return redirect(url_for('admin_create'))
     elif delete_form.delete_book.data:
         if delete_form.validate_on_submit():
             return redirect(url_for('delete_book', id=delete_form.book_select.data))
 
-    return render_template('admin.html', title='Admin Page', books=books, form_one=create_form, form_two=delete_form, checkout_count=checkout_count)
+    return render_template('admin-create.html', title='Admin Page', books=books, form_one=create_form, form_two=delete_form, checkout_count=checkout_count)
 
+@app.route('/admin/stats', methods=['GET', 'POST'])
+@login_required
+def admin_stats():
+    checkout_count = Checkout.query.filter_by(is_return=False).count() - Checkout.query.filter_by(is_return=True).count()
+    last_checkout = Checkout.query.order_by(Checkout.id.desc()).first()
+    return render_template('admin-stats.html', checkout_count=checkout_count, last_checkout=last_checkout)
+
+# TODO: Fix login to better implement remember me data
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if current_user.is_authenticated:
@@ -111,6 +129,7 @@ def delete_student(id):
     return '', 204
 
 @app.route('/books/<id>', methods=['GET', 'POST'])
+@login_required
 def delete_book(id):
     book = Book.query.get_or_404(id)
     if book.deleted:
@@ -118,6 +137,6 @@ def delete_book(id):
     book.deleted = True
     db.session.commit()
     flash('{} was successfully deleted from the library.'.format(book.title))
-    return redirect(url_for('admin'))
+    return redirect(url_for('admin_create'))
 
 

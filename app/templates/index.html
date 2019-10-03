@@ -1,34 +1,19 @@
 {% extends "base.html" %}
+{% import 'bootstrap/wtf.html' as wtf %}
 
-{% block content %}
-    <h1>Student Checkout & Return</h1>
-    <form action="" method="post" novalidate>
+{% block app_content %}
+    <h1 class="text-center">Student Checkout & Return</h1>
+    <form class="form form-horizontal" method="post" role="form">
         {{ form.hidden_tag() }}
-        <p>
-            {{ form.book_select.label }}<br>
-            {{ form.book_select(size=3) }}
-            {% for error in form.book_select.errors %} 
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.student_select.label }}<br>
-            {{ form.student_select(size=3) }}
-            {% for error in form.student_select.errors %} 
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form.checkout_field }}
-            {{ form.return_field }}
-        </p>
+        {{ wtf.form_errors(form, hiddens="only") }}
+
+        <div>
+            {{ wtf.form_field(form.book_select) }}
+            {{ wtf.form_field(form.student_select) }}
+            <div class="d-flex justify-content-center">
+                {{ wtf.form_field(form.checkout_field, class='btn btn-primary') }}
+                {{ wtf.form_field(form.return_field, class='btn btn-primary') }}
+            </div>
+        </div>
     </form>
-    
-    {% if books %}
-    <ul>
-        {% for book in books %}
-        <li>{{ book.title }}, Number: {{ book.number_books }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
 {% endblock %}

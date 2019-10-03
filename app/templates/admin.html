@@ -1,55 +1,9 @@
 {% extends "base.html" %}
 
-{% block content %}
-    <h1>Administrator Page</h1>
-    {% if books %}
-    <ul>
-        {% for b in books %}
-        <li>{{ b.title }}, {{ b.number_books }}</li>
-        {% endfor %}
-    </ul>
-    {% endif %}
-    <form action="" method="post" autocomplete="off" novalidate>
-        {{ form_one.hidden_tag() }}
-        <p>
-            {{ form_one.book_title.label }}<br>
-            {{ form_one.book_title(size=32) }}
-            {% for error in form_one.book_title.errors %} 
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form_one.author.label }}<br>
-            {{ form_one.author(size=32) }}
-            {% for error in form_one.author.errors %} 
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form_one.copies.label }}<br>
-            {{ form_one.copies(size=32) }}
-            {% for error in form_one.copies.errors %} 
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form_one.create_book }}
-        </p>
-    </form>
-    <form action="" method="post" novalidate>
-        {{ form_two.hidden_tag() }}
-        <p>
-            {{ form_two.book_select.label }}<br>
-            {{ form_two.book_select }}
-            {% for errors in form_two.book_select.errors %}
-            <span style="color: red;">[{{ error }}]</span>
-            {% endfor %}
-        </p>
-        <p>
-            {{ form_two.delete_book }}
-        </p>
-    </form>
-    <p>
-        {{ checkout_count }}
-    </p>
+{% block app_content %}
+<h1 class="text-center">Starting Admin Page</h1>
+<div class="d-flex justify-content-center">
+    <a class="btn btn-primary" href="{{ url_for('admin_create') }}">Student & Book Creation</a></li>
+    <a class="btn btn-primary" href="{{ url_for('admin_stats') }}">Records & Statistics</a></li>
+</div>
 {% endblock %}

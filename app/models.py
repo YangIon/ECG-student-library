@@ -1,7 +1,15 @@
 from datetime import datetime
+import pytz
 from app import db, login
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+
+def easterntz(dttm):
+    utcmoment_naive = dttm 
+    utcmoment = utcmoment_naive.replace(tzinfo=pytz.utc)
+    timezone = 'America/New_York'
+    local_datetime = utcmoment.astimezone(pytz.timezone(timezone))
+    return local_datetime
 
 @login.user_loader
 def load_user(id):
@@ -73,13 +81,16 @@ class Book(db.Model):
     def __repr__(self):
         return '<Book {}>'.format(self.title)
 
+    def lastCheckout(self):
+        return Checkout.query.filter_by(book_id=self.id).order_by(Checkout.id.desc()).first()
+
 class Checkout(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
     book_id = db.Column(db.Integer, db.ForeignKey('books.id'))
     student = db.relationship('Student', backref=db.backref("checkouts"))
     book = db.relationship('Book', backref=db.backref("checkouts"))
-    dttm = db.Column(db.DateTime, index=True, default=datetime.utcnow)
+    dttm = db.Column(db.DateTime, index=True, default=easterntz(datetime.utcnow()))
     is_return = db.Column(db.Boolean, unique=False)
 
     def __init__(self, student=None, book=None, is_return=None):
@@ -89,6 +100,16 @@ class Checkout(db.Model):
 
     def __repr__(self):
         if self.is_return:
-            return '<Return of {} by {}>'.format(self.book.title, self.student.name)
+            return '<< Return of {} by {} on {} >>'.format(self.book.title, self.student.name, self.getFormattedDate())
         else:
-            return '<Checkout of {} by {}>'.format(self.book.title, self.student.name)
+            return '<< Checkout of {} by {} on {} >>'.format(self.book.title, self.student.name, self.getFormattedDate())
+    
+    def getStudent(self):
+        return self.student
+    
+    def getBook(self):
+        return self.book
+
+    def getFormattedDate(self):
+        fmt = "%b %d, %Y %I:%M %p"
+        return self.dttm.strftime(fmt)

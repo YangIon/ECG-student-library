@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block app_content %}
+<a href="{{ url_for('admin') }}">Back</a>
+<h1>Records & Statistics</h1>
+<ul>
+    <li>Total number of checkouts: {{ checkout_count }}</li>
+    <li>Last Checkout: {{ last_checkout }}</li>
+</ul>
+
+{% endblock %}
